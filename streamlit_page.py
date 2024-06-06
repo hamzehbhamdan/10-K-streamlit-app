@@ -60,7 +60,7 @@ def extract_np_arrays(columns_selected_idx, df, companies, idx1, idx2, type='Ave
 
 @st.cache_data
 def load_data(query, params=()):
-    conn = sqlite3.connect('full_data/embeddings.db')
+    conn = sqlite3.connect('embeddings_lite.db')
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
@@ -138,7 +138,7 @@ company_names = st.text_input("Enter company tickers separated by commas.", valu
 if len(company_names) > 1:
     company_names = [name.strip().upper() for name in company_names]
     placeholders = ','.join(['?'] * len(company_names))
-    query = f"SELECT * FROM embeddings WHERE Ticker IN ({placeholders})"
+    query = f"SELECT * FROM embeddings_lite WHERE Ticker IN ({placeholders})"
     filtered_df = load_data(query, params=company_names)
 
     if len(filtered_df) == len(company_names):
