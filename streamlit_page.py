@@ -60,7 +60,7 @@ def extract_np_arrays(columns_selected_idx, df, companies, idx1, idx2, type='Ave
 
 @st.cache_data
 def load_data(query, params=()):
-    conn = sqlite3.connect('full_data/embeddings.db')
+    conn = sqlite3.connect('embeddings.db')
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
