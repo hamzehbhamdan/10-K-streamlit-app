@@ -60,7 +60,7 @@ def extract_np_arrays(columns_selected_idx, df, companies, idx1, idx2, type='Ave
 
 @st.cache_data
 def load_data(query, params=()):
-    conn = sqlite3.connect('embeddings.db')
+    conn = sqlite3.connect('full_data/embeddings.db')
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
@@ -146,7 +146,6 @@ if len(company_names) > 1:
             display_cosine_similarity_for_two(company_names, filtered_df)
         else:
             sections_selected = st.multiselect("Which section of the 10-K filing would you like to compare?", titles, default=['Entire 10-K File'])                
-            print(sections_selected)
             idx_list = []
             for sec in sections_selected:
                 idx_list.append(titles.index(sec))
