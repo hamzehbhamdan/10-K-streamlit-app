@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cosine
-import sqlite3
+import psycopg2
 
 sections = [
     "1 - Business",
@@ -60,7 +60,13 @@ def extract_np_arrays(columns_selected_idx, df, companies, idx1, idx2, type='Ave
 
 @st.cache_data
 def load_data(query, params=()):
-    conn = sqlite3.connect('embeddings_lite.db')
+    conn = psycopg2.connect(
+        dbname='dbcje502ldqf5d', 
+        user='ub8msocfao9jk5', 
+        password='pe88f4d04d5995ee5b05b92782ab6428b7b7c739751166adc4aebc3ca69cd826c', 
+        host='c11ai4tgvdcf54.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com', 
+        port='5432'
+    )
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
@@ -68,8 +74,6 @@ def load_data(query, params=()):
 def display_cosine_similarity_for_two(companies, df):
     st.write(f"Cosine Similarity for {companies[0]} and {companies[1]} by 10-K Filing section.")
     df = df[df['Ticker'].isin(companies)]
-    cols = ['Embeddings', '1_Embeddings', '1A_Embeddings', '1B_Embeddings', '2_Embeddings', '3_Embeddings', '4_Embeddings', '5_Embeddings', '6_Embeddings', '7_Embeddings', '7A_Embeddings', '9A_Embeddings', '9B_Embeddings', '10_Embeddings', '11_Embeddings', '12_Embeddings', '13_Embeddings', '14_Embeddings']
-    titles = ['Entire 10-K File', 'Section 1: Business', 'Section 1A: Risk Factors', 'Section 1B: Unresolved Staff Comments', 'Section 2: Properties', 'Section 3: Legal Proceedings', 'Section 4: Mine Safety Disclosures', 'Section 5: Market for Registrant’s Common Equity, Related Stockholder\n Matters and Issuer Purchases of Equity Securities', 'Section 6: Selected Financial Data', 'Section 7: Management’s Discussion and Analysis of\n Financial Condition and Results of Operations', 'Section 7A: Quantitative and Qualitative Disclosures about Market Risk', 'Section 9A: Controls and Procedures', 'Section 9B: Other Information', 'Section 10: Directors, Executive Officers and Corporate Governance', 'Section 11: Executive Compensation', 'Section 12: Security Ownership of Certain Beneficial Owners\n and Management and Related Stockholder Matters', 'Section 13: Certain Relationships and Related Transactions,\n and Director Independence', 'Section 14: Principal Accountant Fees and Services']
     similarities = {}
     for idx, col in enumerate(cols):
         similarity = 1 - cosine(extract_np_array(df.loc[df['Ticker'] == companies[0], col].values[0]), extract_np_array(df.loc[df['Ticker'] == companies[1], col].values[0]))
@@ -88,7 +92,7 @@ def display_cosine_similarity_for_two(companies, df):
     min_value = similarity_df['Cosine Similarity'].min()
     ax.set_xlim(min_value - 0.05, 1.0)
 
-    ticks_values = np.arange(0, 1.05, 0.05)  # Ensure it covers up to 1.0
+    ticks_values = np.arange(0, 1.05, 0.05)
     ticks = [tick for tick in ticks_values if min_value - 0.05 <= tick <= 1.0]
     ax.set_xticks(ticks)
 
@@ -98,7 +102,6 @@ def display_cosine_similarity_for_two(companies, df):
     st.pyplot(fig)
 
 def display_cosine_similarity_matrix(companies, df, threshold=None, index_selected=[0]):
-    #type = st.selectbox("Would you like section embeddings to be concatenated or averaged?\n\n Note that this will only make a difference if you choose more than one section.", ['Averaged', 'Concatenated'], index=0)
     if index_selected == []:
         index_selected = [0]
     companies_text = ', '.join(companies)
@@ -110,7 +113,7 @@ def display_cosine_similarity_matrix(companies, df, threshold=None, index_select
                 company1array, company2array = extract_np_arrays(columns_selected_idx=index_selected, df=df, companies=companies, idx1=i, idx2=j)
                 similarity = 1 - cosine(company1array, company2array)
                 similarity_matrix[i, j] = similarity_matrix[j, i] = similarity
-                if threshold != None:
+                if threshold is not None:
                     if similarity < threshold:
                         similarity_matrix[i, j] = similarity_matrix[j, i] = 0
             else:
@@ -137,8 +140,8 @@ company_names = st.text_input("Enter company tickers separated by commas.", valu
 
 if len(company_names) > 1:
     company_names = [name.strip().upper() for name in company_names]
-    placeholders = ','.join(['?'] * len(company_names))
-    query = f"SELECT * FROM embeddings_lite WHERE Ticker IN ({placeholders})"
+    placeholders = ','.join(['%s'] * len(company_names))
+    query = f"SELECT * FROM embeddings WHERE Ticker IN ({placeholders})"
     filtered_df = load_data(query, params=company_names)
 
     if len(filtered_df) == len(company_names):
