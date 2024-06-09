@@ -137,7 +137,7 @@ st.write('The code behind this project is available at https://github.com/hamzeh
 
 st.download_button(label='Paper PDF', data=file_data, file_name='10-K Embeddings.pdf', mime="application/pdf")
 
-company_names = st.text_input("Enter company tickers separated by commas.", value='AAPL, META, AMZN, WMT').split(',')
+company_names = st.text_input("Enter 2+ company tickers separated by commas.", value='AAPL, META, AMZN, WMT').split(',')
 
 if len(company_names) > 1:
     company_names = [name.strip().upper() for name in company_names]
