@@ -67,6 +67,7 @@ def load_data(query, params=()):
         host='c11ai4tgvdcf54.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com', 
         port='5432'
     )
+
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
@@ -140,10 +141,9 @@ company_names = st.text_input("Enter company tickers separated by commas.", valu
 
 if len(company_names) > 1:
     company_names = [name.strip().upper() for name in company_names]
-    placeholders = ','.join(['%s'] * len(company_names))
-    query = f"SELECT * FROM embeddings WHERE Ticker IN ({placeholders})"
+    placeholders = ', '.join(['%s'] * len(company_names))
+    query = f'SELECT * FROM filing10kdata WHERE filing10kdata."Ticker" IN ({placeholders})'
     filtered_df = load_data(query, params=company_names)
-
     if len(filtered_df) == len(company_names):
         if len(company_names) == 2:
             display_cosine_similarity_for_two(company_names, filtered_df)
